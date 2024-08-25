@@ -10,7 +10,7 @@ The **Movie Library API** is a RESTful web service built with PHP and MySQL that
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
-    - [Postman Collection](#postman)
+    - [Postman Collection](#postman-collection)
 
 ## Features
 
