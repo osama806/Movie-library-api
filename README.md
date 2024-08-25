@@ -10,6 +10,7 @@ The **Movie Library API** is a RESTful web service built with PHP and MySQL that
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
+    - [Postman Collection](#postman)
 
 ## Features
 
@@ -88,3 +89,10 @@ These instructions will help you set up and run the Movie Library API on your lo
 6. **Start the server:**:
   - For Apache or Nginx, ensure the server is running.
   - The API will be accessible at http://localhost/Movie-library-api.
+
+
+### Postman Collection
+- Link:
+    ```
+    https://web.postman.co/workspace/Public-Collections-to-Share~6c698a35-a5d0-4170-b396-cae86a275be3
+    ```
