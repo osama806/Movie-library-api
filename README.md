@@ -92,7 +92,11 @@ These instructions will help you set up and run the Movie Library API on your lo
 
 
 ### Postman Collection
-- Link:
+- Link collection:
     ```
     https://web.postman.co/workspace/Public-Collections-to-Share~6c698a35-a5d0-4170-b396-cae86a275be3
+    ```
+- Link documentation:
+    ```
+    https://documenter.getpostman.com/view/32954091/2sAXjF9uoT
     ```
