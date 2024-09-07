@@ -4,9 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Traits\ResponseTrait;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -15,78 +13,57 @@ class AuthService
     use ResponseTrait;
 
     /**
-     * Validation from user and generation token
+     * Create new user in database
      * @param array $data
-     * @return \Illuminate\Http\Response
+     * @return array
      */
-    public function login(array $data): Response
+    public function register(array $data)
     {
-        // check from request data
-        $validator = Validator::make($data, [
-            "email"             =>      [
-                "required",
-                "regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/",
-            ],
-            "password"          =>      "required|numeric|min_digits:6|max_digits:10"
+        $newUser = User::create([
+            "name"          =>      $data['name'],
+            "email"         =>      $data['email'],
+            "password"      =>      bcrypt($data['password'])
         ]);
-        if ($validator->fails()) {
-            throw new ValidationException($validator, $this->getResponse("errors", $validator->errors(), 402));
-        }
-        // collection request data to array
-        $dataValidation =  $validator->validated();
-        try {
-            // check email and password with saved in database
-            if (!$token = JWTAuth::attempt($dataValidation)) {
-                return $this->getResponse("error", "username or password is incorrect", 401);
-            }
-        } catch (JWTException $e) {
-            return $this->getResponse("error", "Could not create token", 500);
-        }
-        return $this->getResponse("token", $token, 202);
+        return $newUser
+            ? ['status'      =>   true]
+            : ['status'     =>      false, 'msg'    =>  'Registration is failed!', 'code'  =>   400];
     }
 
     /**
-     * Create new user in database
+     * Validation from user and generation token
      * @param array $data
-     * @return Response|\Illuminate\Contracts\Routing\ResponseFactory
+     * @throws \Illuminate\Http\Exceptions\HttpResponseException
+     * @return array
      */
-    public function register(array $data): Response
+    public function login(array $data)
     {
-        $validator = Validator::make($data, [
-            "name"              =>      "required|string|max:255",
-            "email"             =>      [
-                "required",
-                "regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/",
-                "unique:users,email"
-            ],
-            "password"          =>      "required|numeric|confirmed"
-        ]);
-        if ($validator->fails())
-            throw new ValidationException($validator, $this->getResponse("errors", $validator->errors(), 402));
-        $dataValidator = $validator->validated();
-        // writing request data in database after validation
-        $newUser = User::create([
-            "name"          =>      $dataValidator['name'],
-            "email"         =>      $dataValidator['email'],
-            "password"      =>      bcrypt($dataValidator['password'])
-        ]);
-        return $newUser ?
-            $this->getResponse("msg", "Registration is successfully", 201)
-            : $this->getResponse("error", "Registration is failed!", 400);
+        try {
+            // check email and password with saved in database
+            if (!$token = JWTAuth::attempt($data)) {
+                return ['status'    =>  false, 'msg' => "username or password is incorrect", 'code' =>  401];
+            }
+        } catch (JWTException $e) {
+            throw new HttpResponseException($this->getResponse('error', "Could not create token", 500));
+        }
+        return ['status'    =>  true, "token" =>  $token];
     }
 
     /**
      * Revoke tokens for auth user
-     * @return \Illuminate\Http\Response
+     * @return array
      */
-    public function logout(): Response
+    public function logout()
     {
         try {
-            // Revoke tokens related to auth user
-            JWTAuth::invalidate(JWTAuth::parseToken());
-            return $this->getResponse("msg", "User logged out successfully", 200);
+            // Check if token exists and invalidate it
+            JWTAuth::invalidate(JWTAuth::getToken());
+            return ['status'    =>  true];
         } catch (JWTException $e) {
-            throw new JWTException("Failed to logout, please try again", 500);
+            return [
+                'status'    =>  false,
+                'msg' => 'Failed to logout, please try again',
+                'code'  =>  500
+            ];
         }
     }
 }

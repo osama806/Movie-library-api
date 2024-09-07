@@ -91,8 +91,8 @@ These instructions will help you set up and run the Movie Library API on your lo
   - The API will be accessible at http://localhost/Movie-library-api.
 
 
-### Postman Collection
+### Postman Documentation
 - Link:
     ```
-    https://web.postman.co/workspace/Public-Collections-to-Share~6c698a35-a5d0-4170-b396-cae86a275be3
+    https://documenter.getpostman.com/view/32954091/2sAXjRVpBs
     ```

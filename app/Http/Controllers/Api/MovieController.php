@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Movie\IndexFormRequest;
+use App\Http\Requests\Movie\StoreFormRequest;
+use App\Http\Requests\Movie\UpdateFormRequest;
 use App\Models\Movie;
 use App\Services\MovieService;
 use App\Traits\ResponseTrait;
-use Illuminate\Http\Request;
 
 class MovieController extends Controller
 {
@@ -24,50 +26,64 @@ class MovieController extends Controller
 
     /**
      * Get a listing of movies with pagination, sorting and filtering
-     * @param \Illuminate\Http\Request $request
+     * @param \App\Http\Requests\Movie\IndexFormRequest $indexFormRequest
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(IndexFormRequest $indexFormRequest)
     {
-        return $this->movieService->index($request->all());
+        $validated = $indexFormRequest->validated();
+        $response = $this->movieService->index($validated);
+        return $response['status']
+            ? $this->getResponse('movies', $response['movies'], 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**
      * Store a newly created movie in storage.
-     * @param \Illuminate\Http\Request $request
+     * @param \App\Http\Requests\Movie\StoreFormRequest $storeFormRequest
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreFormRequest $storeFormRequest)
     {
-        // send all data that recieved from request to createMovie method in movieService service
-        return $this->movieService->createMovie($request->all());
+        $validated = $storeFormRequest->validated();
+        $response = $this->movieService->createMovie($validated);
+        return $response['status']
+            ? $this->getResponse('msg', 'Movie is created successfully', 201)
+            : $this->getResponse('msg', $response['msg'], $response['code']);
     }
 
     /**
      * Get the specified movie by id.
-     * @param int $id
+     * @param mixed $id
      * @return \Illuminate\Http\Response
      */
     public function show($id)
     {
-        return $this->movieService->show($id);
+        $response = $this->movieService->show($id);
+        return $response['status']
+            ? $this->getResponse('msg', $response['movie'], 200)
+            : $this->getResponse('msg', $response['msg'], $response['code']);
     }
 
     /**
      * Update the specified movie in storage.
-     * @param \Illuminate\Http\Request $request
-     * @param int $id
+     * @param \App\Http\Requests\Movie\UpdateFormRequest $updateFormRequest
+     * @param mixed $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UpdateFormRequest $updateFormRequest, $id)
     {
+        $validated = $updateFormRequest->validated();
         // check if movie is exsist or no
         $movie = Movie::find($id);
         if (!$movie)
             return $this->getResponse("msg", "Not Found This Movie!", 404);
 
         // send data that recieved from request and movie id to updateMovie method in movieService service
-        return $this->movieService->updateMovie($request->all(), $movie);
+        $response = $this->movieService->updateMovie($validated, $movie);
+        return $response['status']
+            ? $this->getResponse('msg', 'Movie details updated successfully', 200)
+            : $this->getResponse('error', 'There is error in server', 500);
     }
 
     /**
@@ -81,6 +97,9 @@ class MovieController extends Controller
         if (!$movie)
             return $this->getResponse("msg", "Not Found This Movie", 404);
 
-        return $this->movieService->deleteMovie($movie);
+        $response = $this->movieService->deleteMovie($movie);
+        return $response['status']
+            ? $this->getResponse('msg', "Movie is deleted successfully", 200)
+            : $this->getResponse('error', "There is error in server", 500);
     }
 }

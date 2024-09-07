@@ -10,7 +10,7 @@ Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware('auth:api')->group(function () {
-    Route::get('/logout', [AuthController::class, 'logout']);
+    Route::post('/logout', [AuthController::class, 'logout']);
 });
 
 Route::prefix('v1')->group(function () {
@@ -19,7 +19,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('movies', MovieController::class)->only(['store', 'update', 'destroy']);
     });
 
-    Route::apiResource('ratings', RatingController::class)->only(['index', 'show']);
+    Route::apiResource('ratings', RatingController::class)->only(['show']);
     Route::middleware('auth:api')->group(function () {
         Route::apiResource('ratings', RatingController::class)->only(['store', 'update', 'destroy']);
     });

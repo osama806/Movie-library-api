@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginFormRequest;
+use App\Http\Requests\Auth\RegisterFormRequest;
 use App\Services\AuthService;
 use App\Traits\ResponseTrait;
-use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
@@ -20,26 +21,36 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
-    /**
-     * Validation from user and generation token
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-    public function login(Request $request)
-    {
-        return $this->authService->login($request->all());
-    }
 
 
     /**
      * Create new user in database
-     * @param \Illuminate\Http\Request $request
+     * @param \App\Http\Requests\Auth\RegisterFormRequest $registerFormRequest
      * @return \Illuminate\Http\Response
      */
-    public function register(Request $request)
+    public function register(RegisterFormRequest $registerFormRequest)
     {
-        return $this->authService->register($request->all());
+        $validated = $registerFormRequest->validated();
+        $response = $this->authService->register($validated);
+        return $response['status']
+            ? $this->getResponse('msg', 'Registration is successfully', 201)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
+
+    /**
+     * Validation from user and generation token
+     * @param \App\Http\Requests\Auth\LoginFormRequest $loginFormRequest
+     * @return \Illuminate\Http\Response
+     */
+    public function login(LoginFormRequest $loginFormRequest)
+    {
+        $validated = $loginFormRequest->validated();
+        $response = $this->authService->login($validated);
+        return $response['status']
+            ? $this->getResponse('token', $response['token'], 202)
+            : $this->getResponse('error', $response['msg'], $response['code']);
+    }
+
 
     /**
      * Revoke tokens for auth user
@@ -47,6 +58,9 @@ class AuthController extends Controller
      */
     public function logout()
     {
-        return $this->authService->logout();
+        $response = $this->authService->logout();
+        return $response['status']
+            ? $this->getResponse('msg', 'User logged out successfully', 200)
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 }
