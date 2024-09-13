@@ -27,7 +27,8 @@ class IndexFormRequest extends FormRequest
         return [
             "per_page"          =>      "nullable|integer|min:1",
             "sort_order"        =>      "nullable|string|in:asc,desc",
-            "director"          =>      "nullable|string"
+            "director"          =>      "nullable|string",
+            "genre"             =>      "nullable|string",
         ];
     }
 
@@ -50,9 +51,10 @@ class IndexFormRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'per_page'      => 'items per page',
-            'sort_order'    => 'sorting order',
-            'director'      => 'director name',
+            'per_page'      => 'Items per page',
+            'sort_order'    => 'Sorting order',
+            'director'      => 'Director name',
+            'genre'         => 'Movie genre',
         ];
     }
 

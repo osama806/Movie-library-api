@@ -83,7 +83,7 @@ class MovieController extends Controller
         $response = $this->movieService->updateMovie($validated, $movie);
         return $response['status']
             ? $this->getResponse('msg', 'Movie details updated successfully', 200)
-            : $this->getResponse('error', 'There is error in server', 500);
+            : $this->getResponse('error', $response['msg'], $response['code']);
     }
 
     /**

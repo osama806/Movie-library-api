@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Resources\MovieResource;
 use App\Models\Movie;
 use App\Traits\ResponseTrait;
 
@@ -18,58 +19,49 @@ class MovieService
     {
         $perPage = $data['per_page'] ?? 5; // Default to 5 if 'per_page' is not provided
         $sortOrder = $data['sort_order'] ?? 'desc'; // Default sort order to 'desc'
-        $director = $data['director'] ?? null;  // Get the director data from request if exsist
+        $director = $data['director'] ?? null;  // Get the director data from request if exists
+        $genre = $data['genre'] ?? null;  // Get the genre from request if exists
 
         // Prepare sorting
         $query = Movie::query();
         $sortBy = 'release_year';
         $query->orderBy($sortBy, $sortOrder);
 
-        // Prepare filtering
+        // Apply filtering
         if ($director) {
             $query->where('director', $director);
         }
 
-        // prepare pagination
-        $movies = $query->paginate($perPage);
-        if ($movies->isEmpty()) {
-            return ['status'    =>  false, 'msg'    =>  "Not Found Any Movie!, GoTo Create New Movie", 'code'   => 404];
+        if ($genre) {
+            $query->where('genre', $genre);
         }
 
-        $moviesArray = [];
-        foreach ($movies as $movie) {
-            $ratingsArray = [];
-            if ($movie->ratings()->count() > 0) {
-                foreach ($movie->ratings as $rating) {
-                    $ratingsArray[] = [
-                        "username"      =>      $rating->user->name,
-                        "rating"        =>      $rating->rating,
-                        "review"        =>      $rating->review
-                    ];
-                }
-            }
+        // Prepare pagination
+        $movies = $query->paginate($perPage);
 
-            $averageRating = $movie->ratings()->avg('rating') ?? 0;
-
-            $moviesArray[] = [
-                "title"          =>   $movie->title,
-                "director"       =>   $movie->director,
-                "genre"          =>   $movie->genre,
-                "release_year"   =>   $movie->release_year,
-                "description"    =>   $movie->description,
-                "ratings"        =>   $ratingsArray,
-                "average_rating" =>   round($averageRating, 1)
+        // Check if no movies found
+        if ($movies->isEmpty()) {
+            return [
+                'status' => false,
+                'msg' => "Not Found Any Movie!, GoTo Create New Movie",
+                'code' => 404
             ];
         }
+
+        // Use API Resource to format the movie data
         $responseData = [
-            "current-page"      =>   $movies->currentPage(),
-            "movies"            =>   $moviesArray,
-            "next-page"         =>   $movies->nextPageUrl(),
-            "previous-page"     =>   $movies->previousPageUrl(),
-            "total-movies"      =>   $movies->total(),
-            "movies-per-page"   =>   $movies->perPage()
+            "current-page"      => $movies->currentPage(),
+            "movies"            => MovieResource::collection($movies), // MovieResource used instead of manual array
+            "next-page"         => $movies->nextPageUrl(),
+            "previous-page"     => $movies->previousPageUrl(),
+            "total-movies"      => $movies->total(),
+            "movies-per-page"   => $movies->perPage()
         ];
-        return ['status'    =>  true, 'movies'  =>  $responseData];
+
+        return [
+            'status' => true,
+            'movies' => $responseData
+        ];
     }
 
     /**
@@ -141,27 +133,15 @@ class MovieService
      */
     public function updateMovie(array $data, Movie $movie)
     {
-        // Update the movie's attributes with validated data
-        if (isset($data['title'])) {
-            $movie->title = $data['title'];
-        }
-        if (isset($data['director'])) {
-            $movie->director = $data['director'];
-        }
-        if (isset($data['genre'])) {
-            $movie->genre = $data['genre'];
-        }
-        if (isset($data['release_year'])) {
-            $movie->release_year = $data['release_year'];
-        }
-        if (isset($data['description'])) {
-            $movie->description = $data['description'];
+        $filteredData = array_filter($data, function ($value) {
+            return !is_null($value) && trim($value) !== '';
+        });
+
+        if (count($filteredData) < 1) {
+            return ['status'    =>  false, 'msg' => 'Not Found Data To Update!', 'code' =>  404];
         }
 
-        // Save the updated movie details
-        $movie->save();
-
-        // Return a success response
+        $movie->update($filteredData);
         return ['status'    =>  true];
     }
 
